@@ -110,14 +110,18 @@ supabase/
 ├── functions/        Edge functions (trigger-followup, process-response)
 ```
 
-## Running Locally
+## Usage
+
+The app runs at **[safetynett.lovable.app](https://safetynett.lovable.app)**. All backend logic (auth, database, edge functions, email dispatch) runs on Supabase Cloud — there is no self-hosted mode.
+
+For local development (modifying the frontend):
 
 ```bash
 npm install
 npm run dev
 ```
 
-Requires `.env` — see `.env.example`.
+Requires `.env` with Supabase and OpenMail credentials pointing to the cloud instance — see `.env.example`.
 
 ## Limitations
 
