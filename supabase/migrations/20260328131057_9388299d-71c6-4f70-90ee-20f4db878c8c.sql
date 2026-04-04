@@ -1,0 +1,1 @@
+ALTER TABLE public.safety_nets ADD COLUMN follow_up_method text NOT NULL DEFAULT 'email';
