@@ -4,6 +4,8 @@
 [![Live Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://safetynett.lovable.app)
 [![Built at](https://img.shields.io/badge/built%20at-OpenClaw%20Hackathon-orange)](https://clinicalhackathon.com)
 
+**[Architecture](#architecture) | [Clinical Coverage](#clinical-coverage) | [Why This Matters](#why-this-matters) | [Roadmap](#post-hackathon-in-development) | [Tech Stack](#tech-stack) | [Team](#team)**
+
 Every GP in the NHS gives the same instruction: *"Come back if you're not better."* Most patients don't come back. They deteriorate at home, misread their own symptoms, or simply forget. Safety netting — the clinical process of ensuring patients know when to seek further help — is verbal, untracked, and fails silently.
 
 SafetyNett closes that gap. GPs create condition-specific safety nets at the point of care. The system contacts patients automatically after a set interval, collects their response, and uses AI to analyse whether their symptoms indicate clinical deterioration. If the AI detects red flags, the GP is escalated immediately with the patient's own words and a severity assessment.
@@ -38,7 +40,7 @@ The AI doesn't pattern-match keywords. It reads the patient's natural language r
 
 ## Clinical Coverage
 
-40+ conditions across 9 specialties. Red flag definitions sourced from NICE Clinical Knowledge Summaries and NHS 111 pathway documentation.
+39 conditions across 9 specialties. Red flag definitions sourced from NICE Clinical Knowledge Summaries and NHS 111 pathway documentation.
 
 | Specialty | Conditions |
 |---|---|
