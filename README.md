@@ -1,5 +1,6 @@
 # SafetyNett
 
+[![CI](https://github.com/Ekin-Kahraman/safetynett/actions/workflows/ci.yml/badge.svg)](https://github.com/Ekin-Kahraman/safetynett/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Live Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://safetynett.lovable.app)
 [![Built at](https://img.shields.io/badge/built%20at-OpenClaw%20Hackathon-orange)](https://clinicalhackathon.com)
