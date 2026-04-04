@@ -1,12 +1,19 @@
 # SafetyNett
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Live Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://safetynett.lovable.app)
+[![Built at](https://img.shields.io/badge/built%20at-OpenClaw%20Hackathon-orange)](https://clinicalhackathon.com)
+
 Every GP in the NHS gives the same instruction: *"Come back if you're not better."* Most patients don't come back. They deteriorate at home, misread their own symptoms, or simply forget. Safety netting — the clinical process of ensuring patients know when to seek further help — is verbal, untracked, and fails silently.
 
 SafetyNett closes that gap. GPs create condition-specific safety nets at the point of care. The system contacts patients automatically after a set interval, collects their response, and uses AI to analyse whether their symptoms indicate clinical deterioration. If the AI detects red flags, the GP is escalated immediately with the patient's own words and a severity assessment.
 
 **Live:** [safetynett.lovable.app](https://safetynett.lovable.app)
 
-Built in 2.5 hours at the OpenClaw Clinical Hackathon (28 March 2026, Accurx HQ, London).
+Built in 2.5 hours at the [OpenClaw Clinical Hackathon](https://clinicalhackathon.com) (28 March 2026, Accurx HQ, London).
+
+<!-- TODO: Add a screenshot or demo GIF of the dashboard here -->
+<!-- ![SafetyNett Dashboard](screenshot.png) -->
 
 ## Architecture
 
@@ -48,9 +55,11 @@ The AI doesn't pattern-match keywords. It reads the patient's natural language r
 
 Each condition carries its own red flag set. Meningitis flags non-blanching rash, neck stiffness, photophobia, bulging fontanelle, altered consciousness. Cauda equina flags saddle numbness, bilateral leg weakness, urinary retention. The clinical logic is specific, not generic.
 
-## What Makes This Different
+## Why This Matters
 
-**Safety netting is a solved clinical concept with zero digital infrastructure.** NICE guidelines mandate it. The RCGP teaches it. Every GP does it verbally. But there is no system that tracks whether the instruction was followed, whether the patient understood it, or whether they deteriorated at home without seeking help.
+Safety netting is a solved clinical concept with zero digital infrastructure. NICE guidelines mandate it. The RCGP teaches it. Every GP does it verbally. But there is no system that tracks whether the instruction was followed, whether the patient understood it, or whether they deteriorated at home without seeking help.
+
+This isn't a theoretical gap. NHS England stated in October 2024 that primary care should *"have information systems that automatically flag patient safety issues such as missed patient referral follow-ups, safeguarding, diagnoses and medication issues."* A [2022 JMIR framework](https://medinform.jmir.org/2022/8/e35726) for evaluating e-safety-netting tools concluded that **no tools currently available meet all the criteria**. Existing solutions (EMIS templates, Ardens, SystmOne flags) are passive reminders embedded in EHR systems — none actively contact the patient, collect a response, or analyse it.
 
 SafetyNett is not a symptom checker. It doesn't diagnose. It automates the follow-up that GPs already give, makes it trackable, and escalates when patients describe symptoms that clinically warrant it.
 
