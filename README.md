@@ -12,8 +12,7 @@ SafetyNett closes that gap. GPs create condition-specific safety nets at the poi
 
 Built in 2.5 hours at the [OpenClaw Clinical Hackathon](https://clinicalhackathon.com) (28 March 2026, Accurx HQ, London).
 
-<!-- TODO: Add a screenshot or demo GIF of the dashboard here -->
-<!-- ![SafetyNett Dashboard](screenshot.png) -->
+![SafetyNett Dashboard](screenshot.png)
 
 ## Architecture
 
