@@ -59,7 +59,7 @@ Each condition carries its own red flag set. Meningitis flags non-blanching rash
 
 ## Why This Matters
 
-Safety netting is a solved clinical concept with zero digital infrastructure. NICE guidelines mandate it. The RCGP teaches it. Every GP does it verbally. But there is no system that tracks whether the instruction was followed, whether the patient understood it, or whether they deteriorated at home without seeking help.
+Safety netting is a solved clinical concept with inadequate digital infrastructure. NICE guidelines mandate it. The RCGP teaches it. Every GP does it verbally. Existing tools (EMIS templates, Ardens, SystmOne flags) are passive reminders — they don't contact the patient, collect a response, or analyse whether symptoms have progressed. There is no system that actively tracks whether the instruction was followed or whether the patient deteriorated at home.
 
 This isn't a theoretical gap. NHS England stated in October 2024 that primary care should *"have information systems that automatically flag patient safety issues such as missed patient referral follow-ups, safeguarding, diagnoses and medication issues."* A [2022 JMIR framework](https://medinform.jmir.org/2022/8/e35726) for evaluating e-safety-netting tools concluded that **no tools currently available meet all the criteria**. Existing solutions (EMIS templates, Ardens, SystmOne flags) are passive reminders embedded in EHR systems — none actively contact the patient, collect a response, or analyse it.
 
