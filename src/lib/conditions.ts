@@ -1,3 +1,17 @@
+/**
+ * Clinical condition and red flag definitions.
+ *
+ * All red flags sourced from NICE Clinical Knowledge Summaries (CKS)
+ * and NHS 111 pathway documentation. Each condition maps to specific
+ * symptoms that warrant GP escalation — these are the "safety net"
+ * instructions that GPs give verbally but are rarely tracked.
+ *
+ * Sources:
+ *   - NICE CKS: https://cks.nice.org.uk/
+ *   - NHS 111: https://111.nhs.uk/
+ *   - RCGP Safety Netting guidance
+ */
+
 export interface ConditionGroup {
   specialty: string;
   conditions: string[];
