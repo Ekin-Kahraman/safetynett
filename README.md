@@ -132,7 +132,9 @@ Hackathon prototype. Supports clinical decision-making — does not replace clin
 
 ## Team
 
-Built by a team of five at the OpenClaw Clinical Hackathon. Clinical logic authored from NICE Clinical Knowledge Summaries and NHS 111 pathway documentation, and reviewed by team member [Simon Yip](github.com/SimonYip22).
+Built at the OpenClaw Clinical Hackathon by [Ekin Kahraman](https://github.com/Ekin-Kahraman) and [Simon Yip](https://github.com/SimonYip22), as part of a five-person team.
+
+Clinical logic and safety-netting criteria were authored from NICE Clinical Knowledge Summaries and NHS 111 pathway documentation, with clinical review by Simon Yip.
 
 ## Licence
 
