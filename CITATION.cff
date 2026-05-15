@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+message: "If you reference this prototype, please cite the repository."
+title: "SafetyNett: AI-assisted clinical safety-netting prototype"
+type: software
+license: MIT
+repository-code: "https://github.com/Ekin-Kahraman/safetynett"
+url: "https://github.com/Ekin-Kahraman/safetynett"
+abstract: "A React, TypeScript and Supabase prototype for AI-assisted primary-care safety-netting, red-flag detection, patient follow-up, and GP escalation."
+keywords:
+  - digital health
+  - clinical safety
+  - safety-netting
+  - TypeScript
+  - Supabase
+  - NHS
+authors:
+  - family-names: "Kahraman"
+    given-names: "Ekin"
+    affiliation: "University of East Anglia"
+    email: "evk23umu@uea.ac.uk"
