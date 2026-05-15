@@ -31,3 +31,4 @@ dist-ssr
 
 # Local experiments
 managed-agent/
+data/

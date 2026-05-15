@@ -128,6 +128,17 @@ npm run dev
 
 Requires `.env` with Supabase and OpenMail credentials pointing to the cloud instance — see `.env.example`.
 
+## Verification
+
+```bash
+npm run lint
+npm run typecheck
+npm run build
+npm test
+```
+
+GitHub Actions runs the same checks on every push and pull request.
+
 ## Limitations
 
 Hackathon prototype. Supports clinical decision-making — does not replace clinical judgement. AI verification layer and regulatory compliance work are in active development.
