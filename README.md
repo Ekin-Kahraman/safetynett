@@ -7,7 +7,7 @@
 
 **[Architecture](#architecture) | [Clinical Coverage](#clinical-coverage) | [Why This Matters](#why-this-matters) | [Roadmap](#post-hackathon-in-development) | [Tech Stack](#tech-stack) | [Team](#team)**
 
-Every GP in the NHS gives the same instruction: *"Come back if you're not better."* Most patients don't come back. They deteriorate at home, misread their own symptoms, or simply forget. Safety netting — the clinical process of ensuring patients know when to seek further help — is verbal, untracked, and fails silently.
+Every GP in the NHS gives the same instruction: *"Come back if you're not better."* Most patients don't come back. They deteriorate at home, misread their own symptoms, or simply forget. Safety netting - the clinical process of ensuring patients know when to seek further help - is verbal, untracked, and fails silently.
 
 SafetyNett closes that gap. GPs create condition-specific safety nets at the point of care. The system contacts patients automatically after a set interval, collects their response, and uses AI to analyse whether their symptoms indicate clinical deterioration. If the AI detects red flags, the GP is escalated immediately with the patient's own words and a severity assessment.
 
@@ -39,7 +39,7 @@ GP creates safety net ─→ Timer expires ─→ Patient contacted (email / voi
                                                → GP escalated     signal)
 ```
 
-The AI doesn't pattern-match keywords. It reads the patient's natural language response, understands clinical context for that specific condition, and determines whether the described symptoms meet escalation criteria. A parent writing *"she won't drink anything and she's really floppy"* triggers escalation not because of string matching but because the AI recognises fluid refusal and reduced consciousness in a febrile child as clinically dangerous.
+The prototype prompts the model to evaluate the patient's natural-language response against condition-specific red flags. A parent writing *"she won't drink anything and she's really floppy"* should trigger escalation because fluid refusal and reduced consciousness are clinically concerning in a febrile child. This behaviour still needs formal clinical safety validation before real deployment.
 
 ## Clinical Coverage
 
@@ -61,9 +61,9 @@ Each condition carries its own red flag set. Meningitis flags non-blanching rash
 
 ## Why This Matters
 
-Safety netting is a solved clinical concept with inadequate digital infrastructure. NICE guidelines mandate it. The RCGP teaches it. Every GP does it verbally. Existing tools (EMIS templates, Ardens, SystmOne flags) are passive reminders — they don't contact the patient, collect a response, or analyse whether symptoms have progressed. There is no system that actively tracks whether the instruction was followed or whether the patient deteriorated at home.
+Safety netting is an established clinical concept with weak digital infrastructure. NICE guidelines mandate it. The RCGP teaches it. Every GP does it verbally. Existing tools (EMIS templates, Ardens, SystmOne flags) are passive reminders - they don't contact the patient, collect a response, or analyse whether symptoms have progressed. The gap this prototype targets is active follow-up after the patient leaves the consultation.
 
-This isn't a theoretical gap. NHS England stated in October 2024 that primary care should *"have information systems that automatically flag patient safety issues such as missed patient referral follow-ups, safeguarding, diagnoses and medication issues."* A [2022 JMIR framework](https://medinform.jmir.org/2022/8/e35726) for evaluating e-safety-netting tools concluded that **no tools currently available meet all the criteria**. Existing solutions (EMIS templates, Ardens, SystmOne flags) are passive reminders embedded in EHR systems — none actively contact the patient, collect a response, or analyse it.
+This isn't a theoretical gap. NHS England stated in October 2024 that primary care should *"have information systems that automatically flag patient safety issues such as missed patient referral follow-ups, safeguarding, diagnoses and medication issues."* A [2022 JMIR framework](https://medinform.jmir.org/2022/8/e35726) for evaluating e-safety-netting tools concluded that **no tools currently available meet all the criteria**. Existing solutions (EMIS templates, Ardens, SystmOne flags) are passive reminders embedded in EHR systems - none actively contact the patient, collect a response, or analyse it.
 
 SafetyNett is not a symptom checker. It doesn't diagnose. It automates the follow-up that GPs already give, makes it trackable, and escalates when patients describe symptoms that clinically warrant it.
 
@@ -71,7 +71,7 @@ SafetyNett is not a symptom checker. It doesn't diagnose. It automates the follo
 
 ### AI Verification Layer
 
-The primary feedback from hackathon judges (NHS clinicians): automated systems contacting patients about clinical symptoms in a regulated environment carry risk. The right response is not removing AI — it's adding a verification layer.
+The primary feedback from hackathon judges (NHS clinicians): automated systems contacting patients about clinical symptoms in a regulated environment carry risk. The right response is not removing AI - it's adding a verification layer.
 
 A dedicated verification model reviews every outbound communication and every escalation decision before it reaches a patient or GP. The verifier checks:
 
@@ -83,7 +83,7 @@ This creates a dual-model pipeline: primary AI analyses the response, verificati
 
 ### Voice Follow-Up (ElevenLabs)
 
-Email excludes the patients who need safety netting most — older patients, patients with visual impairments, patients with low digital literacy. These are the same patients most likely to deteriorate without seeking help.
+Email excludes the patients who need safety netting most - older patients, patients with visual impairments, patients with low digital literacy. These are the same patients most likely to deteriorate without seeking help.
 
 ElevenLabs voice synthesis delivers follow-ups as automated phone calls running simultaneously with email. The patient responds verbally; speech-to-text feeds into the same AI analysis pipeline. Same clinical logic, different channel. The GP's dashboard shows both email and voice responses in one view.
 
@@ -108,7 +108,7 @@ src/
 ├── components/       Dashboard, safety net cards, forms, navigation
 ├── hooks/            Auth, toast, mobile detection
 ├── integrations/     Supabase client and types
-├── lib/              Clinical logic — conditions, red flags, timeframes
+├── lib/              Clinical logic - conditions, red flags, timeframes
 ├── pages/            Dashboard, create safety net, login
 supabase/
 ├── migrations/       Database schema
@@ -117,7 +117,7 @@ supabase/
 
 ## Usage
 
-The app runs at **[safetynett.lovable.app](https://safetynett.lovable.app)**. All backend logic (auth, database, edge functions, email dispatch) runs on Supabase Cloud — there is no self-hosted mode.
+The app runs at **[safetynett.lovable.app](https://safetynett.lovable.app)**. All backend logic (auth, database, edge functions, email dispatch) runs on Supabase Cloud - there is no self-hosted mode.
 
 For local development (modifying the frontend):
 
@@ -126,7 +126,7 @@ npm install
 npm run dev
 ```
 
-Requires `.env` with Supabase and OpenMail credentials pointing to the cloud instance — see `.env.example`.
+Requires `.env` with Supabase and OpenMail credentials pointing to the cloud instance - see `.env.example`.
 
 ## Verification
 
@@ -141,7 +141,7 @@ GitHub Actions runs the same checks on every push and pull request.
 
 ## Limitations
 
-Hackathon prototype. Supports clinical decision-making — does not replace clinical judgement. AI verification layer and regulatory compliance work are in active development.
+Hackathon prototype. Supports clinical decision-making - does not replace clinical judgement. AI verification layer and regulatory compliance work are in active development.
 
 ## Team
 
