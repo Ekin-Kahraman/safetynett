@@ -5,45 +5,50 @@
 [![Live Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://safetynett.lovable.app)
 [![Built at](https://img.shields.io/badge/built%20at-OpenClaw%20Hackathon-orange)](https://clinicalhackathon.com)
 
-**[Architecture](#architecture) | [Clinical Coverage](#clinical-coverage) | [Why This Matters](#why-this-matters) | [Roadmap](#post-hackathon-in-development) | [Tech Stack](#tech-stack) | [Team](#team)**
+**[Architecture](#architecture) | [Condition Templates](#condition-templates) | [Why This Matters](#why-this-matters) | [Roadmap](#post-hackathon-in-development) | [Tech Stack](#tech-stack) | [Team](#team)**
 
-Every GP in the NHS gives the same instruction: *"Come back if you're not better."* Most patients don't come back. They deteriorate at home, misread their own symptoms, or simply forget. Safety netting - the clinical process of ensuring patients know when to seek further help - is verbal, untracked, and fails silently.
+SafetyNett is a **hackathon prototype for patient follow-up and clinician alerts**.
+It explores how follow-up records, patient responses and review requests could
+be brought together in one dashboard.
 
-SafetyNett closes that gap. GPs create condition-specific safety nets at the point of care. The system contacts patients automatically after a set interval, collects their response, and uses AI to analyse whether their symptoms indicate clinical deterioration. If the AI detects red flags, the GP is escalated immediately with the patient's own words and a severity assessment.
+The published backend uses keyword matching against condition-specific alert
+phrases. It is not a validated clinical AI system, and a match or missing match
+does not establish whether a patient is safe.
 
-**Live:** [safetynett.lovable.app](https://safetynett.lovable.app)
+**Demo:** [safetynett.lovable.app](https://safetynett.lovable.app)
 
 Built in 2.5 hours at the [OpenClaw Clinical Hackathon](https://clinicalhackathon.com) (28 March 2026, Accurx HQ, London).
 
-*Hackathon prototype, not a deployed clinical device.*
+*Not a deployed clinical device. Use synthetic demonstration data only, not real patient information or care decisions.*
+
+The repository includes a React/TypeScript interface, a Supabase backend and
+email follow-up functions. Automated checks cover code quality, types, builds
+and the condition-template library; they do not establish clinical safety.
 
 ![SafetyNett Dashboard](screenshot.png)
 
 ## Architecture
 
 ```
-GP creates safety net ─→ Timer expires ─→ Patient contacted (email / voice)
-                                                    │
-                                              Patient responds
-                                                    │
-                                          AI analyses response
-                                           against condition-specific
-                                           red flag criteria
-                                                    │
-                                    ┌───────────────┼───────────────┐
-                                    ▼               ▼               ▼
-                               No red flags    Red flags        No response
-                               → Resolved      detected         → Escalate
-                                               → Severity       (non-response
-                                                 scored           is clinical
-                                               → GP escalated     signal)
+Follow-up record → Due-record function → Email (when configured)
+                                               │
+                                        Response recorded
+                                               │
+                                         Keyword check
+                                               │
+                              Dashboard status and review alert
 ```
 
-The prototype prompts the model to evaluate the patient's natural-language response against condition-specific red flags. A parent writing *"she won't drink anything and she's really floppy"* should trigger escalation because fluid refusal and reduced consciousness are clinically concerning in a febrile child. This behaviour still needs formal clinical safety validation before real deployment.
+Email and scheduled execution depend on backend configuration. The current
+matching rule can miss context and negation, and can produce false alerts.
+The backend's `resolved` status means no keyword matched; it is **not** a
+clinical assessment. Voice and model-based verification are proposed features.
 
-## Clinical Coverage
+## Condition Templates
 
-39 conditions across 9 specialties. Red flag definitions sourced from NICE Clinical Knowledge Summaries and NHS 111 pathway documentation.
+The template library spans nine specialties. The team used NICE and NHS 111
+materials as references, but this does not make the templates complete,
+clinically validated or endorsed by those organisations.
 
 | Specialty | Conditions |
 |---|---|
@@ -57,40 +62,38 @@ The prototype prompts the model to evaluate the patient's natural-language respo
 | **Musculoskeletal** | Suspected fracture, septic arthritis, cauda equina syndrome |
 | **Dermatology** | Cellulitis, allergic reaction, necrotising fasciitis |
 
-Each condition carries its own red flag set. Meningitis flags non-blanching rash, neck stiffness, photophobia, bulging fontanelle, altered consciousness. Cauda equina flags saddle numbness, bilateral leg weakness, urinary retention. The clinical logic is specific, not generic.
+Templates are demonstration content and need formal review before any clinical
+use. Their presence in tests checks software structure, not medical correctness.
 
 ## Why This Matters
 
-Safety netting is an established clinical concept with weak digital infrastructure. NICE guidelines mandate it. The RCGP teaches it. Every GP does it verbally. Existing tools (EMIS templates, Ardens, SystmOne flags) are passive reminders - they don't contact the patient, collect a response, or analyse whether symptoms have progressed. The gap this prototype targets is active follow-up after the patient leaves the consultation.
+The design question is whether a shared record of follow-up requests and
+responses could help clinicians review outstanding contacts. The prototype
+demonstrates that workflow, rather than claiming to replace existing systems.
 
-This isn't a theoretical gap. NHS England stated in October 2024 that primary care should *"have information systems that automatically flag patient safety issues such as missed patient referral follow-ups, safeguarding, diagnoses and medication issues."* A [2022 JMIR framework](https://medinform.jmir.org/2022/8/e35726) for evaluating e-safety-netting tools concluded that **no tools currently available meet all the criteria**. Existing solutions (EMIS templates, Ardens, SystmOne flags) are passive reminders embedded in EHR systems - none actively contact the patient, collect a response, or analyse it.
-
-SafetyNett is not a symptom checker. It doesn't diagnose. It automates the follow-up that GPs already give, makes it trackable, and escalates when patients describe symptoms that clinically warrant it.
+There is no clinical outcome study, comparison with existing products, or
+evidence here that SafetyNett reduces missed deterioration or workload.
 
 ## Post-Hackathon: In Development
 
-### AI Verification Layer
+The following are proposed directions, not completed or clinically validated
+capabilities of the published prototype.
 
-The primary feedback from hackathon judges (NHS clinicians): automated systems contacting patients about clinical symptoms in a regulated environment carry risk. The right response is not removing AI - it's adding a verification layer.
+### Response review
 
-A dedicated verification model reviews every outbound communication and every escalation decision before it reaches a patient or GP. The verifier checks:
+Explore model-assisted interpretation alongside human review, with tests for
+missed concerns, false alerts, ambiguous language and delivery failures.
+A second model alone would not establish safety.
 
-- Whether the AI's clinical reasoning is sound for the specific condition
-- Whether severity classification matches the described symptoms
-- Whether edge cases (ambiguous language, multiple conditions, patient distress) are flagged for human review
+### Accessible follow-up
 
-This creates a dual-model pipeline: primary AI analyses the response, verification AI audits the analysis, human clinician intervenes where either model flags uncertainty. Designed for MHRA Software as a Medical Device (SaMD) classification and NHS clinical safety standards (DCB0129 / DCB0160).
-
-### Voice Follow-Up (ElevenLabs)
-
-Email excludes the patients who need safety netting most - older patients, patients with visual impairments, patients with low digital literacy. These are the same patients most likely to deteriorate without seeking help.
-
-ElevenLabs voice synthesis delivers follow-ups as automated phone calls running simultaneously with email. The patient responds verbally; speech-to-text feeds into the same AI analysis pipeline. Same clinical logic, different channel. The GP's dashboard shows both email and voice responses in one view.
+Explore voice and language options with users, including people who cannot
+reliably use email. Voice calls and transcription are not implemented here.
 
 ### Further Planned
 
-- FHIR integration for NHS Spine connectivity (PDS patient lookup, GP Connect)
-- Structured audit logging for CQC inspection readiness
+- Integration with clinical records, subject to permissions and formal review
+- Auditable records of communications and review decisions
 - Multi-language patient communications
 - GP-configurable custom red flag definitions
 
@@ -117,7 +120,9 @@ supabase/
 
 ## Usage
 
-The app runs at **[safetynett.lovable.app](https://safetynett.lovable.app)**. All backend logic (auth, database, edge functions, email dispatch) runs on Supabase Cloud - there is no self-hosted mode.
+The [demonstration interface](https://safetynett.lovable.app) uses a Supabase
+backend. Local frontend development still requires backend configuration;
+starting the frontend alone does not set up email delivery or scheduling.
 
 For local development (modifying the frontend):
 
@@ -141,7 +146,11 @@ GitHub Actions runs the same checks on every push and pull request.
 
 ## Limitations
 
-Hackathon prototype. Supports clinical decision-making - does not replace clinical judgement. AI verification layer and regulatory compliance work are in active development.
+This is a software demonstration, not a clinical decision-support product.
+Keyword matching has not been clinically validated. There is no claim of NHS
+endorsement, regulatory approval, validated diagnostic performance or suitability
+for patient care. Backend access, privacy, delivery reliability and clinical
+governance would need formal assessment before any real-world use.
 
 ## Team
 
