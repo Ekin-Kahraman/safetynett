@@ -1,6 +1,6 @@
 const ProtoBanner = () => (
   <div className="bg-warning text-warning-foreground text-center text-sm font-medium py-1.5 px-4">
-    Prototype for demonstration purposes
+    Hackathon prototype · Synthetic demonstration data only
   </div>
 );
 

@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
@@ -7,10 +8,10 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import ProtoBanner from "@/components/ProtoBanner";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import Login from "@/pages/Login";
-import Dashboard from "@/pages/Dashboard";
-import CreateSafetyNet from "@/pages/CreateSafetyNet";
-import NotFound from "@/pages/NotFound";
+const Login = lazy(() => import("@/pages/Login"));
+const Dashboard = lazy(() => import("@/pages/Dashboard"));
+const CreateSafetyNet = lazy(() => import("@/pages/CreateSafetyNet"));
+const NotFound = lazy(() => import("@/pages/NotFound"));
 
 const queryClient = new QueryClient();
 
@@ -24,6 +25,7 @@ const App = () => (
             <ProtoBanner />
             <Navbar />
             <main className="flex-1">
+              <Suspense fallback={<div role="status" className="p-6 text-center text-muted-foreground">Loading view…</div>}>
               <Routes>
                 <Route path="/login" element={<Login />} />
                 <Route
@@ -44,6 +46,7 @@ const App = () => (
                 />
                 <Route path="*" element={<NotFound />} />
               </Routes>
+              </Suspense>
             </main>
             <Footer />
           </div>

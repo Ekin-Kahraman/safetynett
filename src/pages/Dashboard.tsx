@@ -12,7 +12,7 @@ import type { Tables } from "@/integrations/supabase/types";
 type SafetyNet = Tables<"safety_nets">;
 type CheckIn = Tables<"check_ins">;
 
-const TABS = ["All", "Escalated", "Awaiting Response", "Pending", "Resolved"] as const;
+const TABS = ["All", "Escalated", "Awaiting Response", "Pending", "No keyword match"] as const;
 type Tab = (typeof TABS)[number];
 
 const tabToStatus: Record<Tab, string | null> = {
@@ -20,7 +20,7 @@ const tabToStatus: Record<Tab, string | null> = {
   Escalated: "escalated",
   "Awaiting Response": "sent",
   Pending: "pending",
-  Resolved: "resolved",
+  "No keyword match": "resolved",
 };
 
 const statusOrder: Record<string, number> = {
@@ -34,7 +34,7 @@ const Dashboard = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>("All");
 
-  const { data: safetyNets = [], isLoading } = useQuery({
+  const { data: safetyNets = [], isLoading, isError: netsFailed, refetch: reloadNets } = useQuery({
     queryKey: ["safety_nets", user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -47,10 +47,10 @@ const Dashboard = () => {
     enabled: !!user,
   });
 
-  const { data: checkIns = [] } = useQuery({
+  const { data: checkIns = [], isError: checkInsFailed, refetch: reloadCheckIns } = useQuery({
     queryKey: ["check_ins", user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase.from("check_ins").select("*");
+      const { data, error } = await supabase.from("check_ins").select("*").order("sent_at", { ascending: false });
       if (error) throw error;
       return data as CheckIn[];
     },
@@ -96,6 +96,13 @@ const Dashboard = () => {
         </Link>
       </div>
 
+      {(netsFailed || checkInsFailed) && (
+        <div role="alert" className="mb-6 rounded-lg border border-destructive p-4">
+          <p>Some follow-up records could not be loaded. The dashboard may be incomplete.</p>
+          <Button variant="outline" className="mt-2" onClick={() => { reloadNets(); reloadCheckIns(); }}>Retry</Button>
+        </div>
+      )}
+
       {/* Stat boxes */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         <StatBox label="Total Active" count={counts.total} variant="default" />
@@ -129,7 +136,7 @@ const Dashboard = () => {
       ) : sorted.length === 0 ? (
         <div className="text-center py-16">
           <p className="text-muted-foreground text-lg">
-            No active safety nets. Your patients are all accounted for.
+            {netsFailed ? "Follow-up records are unavailable." : "No follow-up records match this view."}
           </p>
         </div>
       ) : (

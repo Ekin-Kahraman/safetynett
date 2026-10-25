@@ -5,14 +5,14 @@ Contributions are welcome when they improve clinical safety, product robustness,
 ## Development setup
 
 ```bash
-npm install
+npm ci
 npm run lint
 npm run typecheck
 npm run build
 npm test
 ```
 
-Local development requires Supabase and email-provider credentials in `.env`. Do not commit real secrets.
+Local frontend development requires public Supabase configuration in `.env`. Email-provider credentials belong only in Supabase function secrets; never use a `VITE_` variable for them. Tests use synthetic data and mocked delivery. Apply the committed database migrations before running the edge functions.
 
 ## Pull request checklist
 

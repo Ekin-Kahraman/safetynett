@@ -67,9 +67,13 @@ const CreateSafetyNet = () => {
 
   const mutation = useMutation({
     mutationFn: async () => {
+      if (!user) throw new Error("Sign in before creating a follow-up.");
+      if (!patientName.trim() || !gpName.trim() || !finalCondition || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(patientEmail.trim())) {
+        throw new Error("Provide a name, valid email address, condition and GP name.");
+      }
       const followUpAt = new Date(Date.now() + timeframeHours * 60 * 60 * 1000).toISOString();
       const { error } = await supabase.from("safety_nets").insert({
-        user_id: user!.id,
+        user_id: user.id,
         patient_name: patientName.trim(),
         patient_email: patientEmail.trim(),
         patient_dob: patientDob ? format(patientDob, "yyyy-MM-dd") : null,
@@ -89,8 +93,8 @@ const CreateSafetyNet = () => {
     onSuccess: () => {
       const label = TIMEFRAMES.find((t) => t.hours === timeframeHours)?.label ?? `${timeframeHours}h`;
       toast({
-        title: "Safety net active",
-        description: `${patientName} will be contacted in ${label}.`,
+        title: "Follow-up saved",
+        description: `Follow-up due in ${label}. Email delivery requires a configured backend.`,
       });
       navigate("/");
     },
@@ -99,7 +103,7 @@ const CreateSafetyNet = () => {
     },
   });
 
-  const canSubmit = patientName && patientEmail && finalCondition && gpName;
+  const canSubmit = patientName.trim() && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(patientEmail.trim()) && finalCondition && gpName.trim();
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-6">
@@ -324,7 +328,8 @@ const CreateSafetyNet = () => {
             </button>
             <button
               type="button"
-              onClick={() => setFollowUpMethod("phone")}
+              disabled
+              title="Automated phone follow-up is not implemented"
               className={cn(
                 "flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-semibold border transition-all",
                 followUpMethod === "phone"
@@ -333,13 +338,13 @@ const CreateSafetyNet = () => {
               )}
             >
               <Phone className="h-4 w-4" />
-              Phone Call
+              Phone Call (planned)
             </button>
           </div>
           <p className="text-xs text-muted-foreground">
             {followUpMethod === "email"
-              ? "Patient will receive an automated email check-in via OpenMail"
-              : "Patient will receive an automated voice call via ElevenLabs"}
+              ? "Email delivery must be configured before follow-ups can be sent."
+              : "Automated phone follow-up is not implemented."}
           </p>
         </div>
 
@@ -383,7 +388,7 @@ const CreateSafetyNet = () => {
           disabled={!canSubmit || mutation.isPending}
           onClick={() => mutation.mutate()}
         >
-          {mutation.isPending ? "Activating…" : "Activate Safety Net"}
+          {mutation.isPending ? "Saving…" : "Save Follow-up"}
         </Button>
       </div>
     </div>

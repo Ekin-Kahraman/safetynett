@@ -20,3 +20,8 @@ jobs:
       - run: npm run typecheck
       - run: npm run build
       - run: npm test
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.9.6
+      - run: deno check --node-modules-dir=manual --config supabase/functions/trigger-followup/deno.json supabase/functions/trigger-followup/index.ts
+      - run: deno check --node-modules-dir=manual --config supabase/functions/process-response/deno.json supabase/functions/process-response/index.ts

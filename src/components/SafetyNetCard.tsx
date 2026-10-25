@@ -10,9 +10,6 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 
-const OPENMAIL_API_KEY = import.meta.env.VITE_OPENMAIL_API_KEY ?? "";
-const OPENMAIL_INBOX_ID = import.meta.env.VITE_OPENMAIL_INBOX_ID ?? "";
-
 type SafetyNet = Tables<"safety_nets">;
 type CheckIn = Tables<"check_ins">;
 
@@ -32,17 +29,8 @@ const statusLabel: Record<string, string> = {
   escalated: "Escalated",
   sent: "Awaiting Response",
   pending: "Pending",
-  resolved: "Resolved",
+  resolved: "No keyword match",
 };
-
-// Simple keyword match for red flags against patient response
-function matchRedFlags(response: string, redFlags: string[]): string[] {
-  const text = response.toLowerCase();
-  return redFlags.filter((flag) => {
-    const words = flag.toLowerCase().split(/\s+/).filter((w) => w.length > 3);
-    return words.some((w) => text.includes(w));
-  });
-}
 
 // Generate a realistic deterioration response based on condition
 function generateBadResponse(condition: string, redFlags: string[]): string {
@@ -73,33 +61,14 @@ const SafetyNetCard = ({ safetyNet, checkIns }: SafetyNetCardProps) => {
 
   const sendEmailMutation = useMutation({
     mutationFn: async () => {
-      const flagsList = safetyNet.red_flags.map((f) => `  - ${f}`).join("\n");
-      const body = `Dear ${safetyNet.patient_name},\n\nYour GP, ${safetyNet.gp_name}, asked us to follow up with you about your ${safetyNet.condition}.\n\nIt has been ${safetyNet.timeframe_hours} hours since your appointment. Please let us know if you are experiencing any of the following:\n\n${flagsList}\n\nReply to this email to let us know how you are doing. If you are feeling better, simply reply saying so.\n\nIf this is a medical emergency, call 999 immediately.\n\nBest wishes,\nSafetyNet — Automated Clinical Safety Netting\nOn behalf of ${safetyNet.gp_name}`;
-
-      const res = await fetch(`https://api.openmail.sh/v1/inboxes/${OPENMAIL_INBOX_ID}/send`, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${OPENMAIL_API_KEY}`,
-          "Content-Type": "application/json",
-          "Idempotency-Key": crypto.randomUUID(),
-        },
-        body: JSON.stringify({
-          to: safetyNet.patient_email,
-          subject: "SafetyNet: Your GP has asked us to check in",
-          body,
-        }),
+      const { data, error } = await supabase.functions.invoke("trigger-followup", {
+        body: { safety_net_id: safetyNet.id },
       });
-
-      if (!res.ok) {
-        const err = await res.text();
-        throw new Error(`OpenMail error: ${res.status} ${err}`);
-      }
-
-      await supabase.from("safety_nets").update({ status: "sent" }).eq("id", safetyNet.id);
-      await supabase.from("check_ins").insert({ safety_net_id: safetyNet.id, patient_response: null, red_flags_triggered: false, escalated: false });
+      if (error) throw new Error("Follow-up was not confirmed. Check backend configuration and retry.");
+      if (data?.processed !== 1) throw new Error(data?.failed?.[0]?.error ?? "Follow-up was not recorded as sent.");
     },
     onSuccess: () => {
-      toast({ title: "Email sent", description: `Follow-up sent to ${safetyNet.patient_email} via OpenMail` });
+      toast({ title: "Email accepted", description: "The provider accepted the follow-up message. Delivery is not confirmed." });
       queryClient.invalidateQueries({ queryKey: ["safety_nets"] });
       queryClient.invalidateQueries({ queryKey: ["check_ins"] });
     },
@@ -110,23 +79,10 @@ const SafetyNetCard = ({ safetyNet, checkIns }: SafetyNetCardProps) => {
 
   const simulateMutation = useMutation({
     mutationFn: async (responseText: string) => {
-      const matched = matchRedFlags(responseText, safetyNet.red_flags);
-      const hasRedFlags = matched.length > 0;
-      const newStatus = hasRedFlags ? "escalated" : "resolved";
-
-      const { error: updateError } = await supabase
-        .from("safety_nets")
-        .update({ status: newStatus })
-        .eq("id", safetyNet.id);
-      if (updateError) throw updateError;
-
-      const { error: checkInError } = await supabase.from("check_ins").insert({
-        safety_net_id: safetyNet.id,
-        patient_response: responseText,
-        red_flags_triggered: hasRedFlags,
-        escalated: hasRedFlags,
+      const { error } = await supabase.functions.invoke("process-response", {
+        body: { safety_net_id: safetyNet.id, response_text: responseText, simulation: true },
       });
-      if (checkInError) throw checkInError;
+      if (error) throw new Error("The demonstration response could not be saved. Please retry.");
     },
     onSuccess: () => {
       setShowSimulate(false);
@@ -134,13 +90,16 @@ const SafetyNetCard = ({ safetyNet, checkIns }: SafetyNetCardProps) => {
       queryClient.invalidateQueries({ queryKey: ["safety_nets"] });
       queryClient.invalidateQueries({ queryKey: ["check_ins"] });
     },
+    onError: (error: Error) => {
+      toast({ title: "Response not saved", description: error.message, variant: "destructive" });
+    },
   });
 
   const barColor = statusBarColor[safetyNet.status] ?? "bg-muted-foreground/40";
 
   const timeText = (() => {
     if (safetyNet.status === "resolved") {
-      return `Resolved ${formatDistanceToNow(new Date(safetyNet.created_at), { addSuffix: true })}`;
+      return "Response recorded — no keyword match";
     }
     const followUp = new Date(safetyNet.follow_up_at);
     if (followUp > new Date()) {
@@ -149,8 +108,8 @@ const SafetyNetCard = ({ safetyNet, checkIns }: SafetyNetCardProps) => {
     return `Follow-up overdue by ${formatDistanceToNow(followUp)}`;
   })();
 
-  const escalatedCheckIn = checkIns.find((ci) => ci.escalated);
-  const latestCheckIn = checkIns[0];
+  const orderedCheckIns = [...checkIns].sort((a, b) => new Date(b.sent_at).getTime() - new Date(a.sent_at).getTime());
+  const latestCheckIn = orderedCheckIns[0];
   const patientResponse = latestCheckIn?.patient_response;
 
   return (
@@ -220,11 +179,7 @@ const SafetyNetCard = ({ safetyNet, checkIns }: SafetyNetCardProps) => {
                   "{patientResponse}"
                 </p>
               )}
-              {escalatedCheckIn && (
-                <p className="text-xs text-muted-foreground">
-                  GP notification sent {formatDistanceToNow(new Date(escalatedCheckIn.sent_at), { addSuffix: true })}
-                </p>
-              )}
+              <p className="text-xs text-muted-foreground">Keyword match — review the response. Email delivery is not confirmed here.</p>
             </div>
           )}
 
@@ -292,10 +247,10 @@ const SafetyNetCard = ({ safetyNet, checkIns }: SafetyNetCardProps) => {
               {checkIns.length > 0 && (
                 <div>
                   <p className="text-sm font-medium text-foreground mb-2">Check-ins</p>
-                  {checkIns.map((ci) => (
+                  {orderedCheckIns.map((ci) => (
                     <div key={ci.id} className="text-sm border border-border rounded p-2 mb-1">
                       <p className="text-muted-foreground">
-                        Sent {formatDistanceToNow(new Date(ci.sent_at), { addSuffix: true })}
+                        Recorded {formatDistanceToNow(new Date(ci.sent_at), { addSuffix: true })}
                       </p>
                       {ci.patient_response && (
                         <p className="text-foreground mt-1">{ci.patient_response}</p>
@@ -313,7 +268,7 @@ const SafetyNetCard = ({ safetyNet, checkIns }: SafetyNetCardProps) => {
                 <div className="pt-2" onClick={(e) => e.stopPropagation()}>
                   {!showSimulate ? (
                     <div className="flex gap-2">
-                      {safetyNet.status === "pending" && (
+                      {safetyNet.status === "pending" && safetyNet.follow_up_method === "email" && (
                         <Button
                           variant="outline"
                           size="sm"
