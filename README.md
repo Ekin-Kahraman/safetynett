@@ -120,7 +120,8 @@ They are not anonymous patient-response webhooks or global administrator jobs.
 Email requests use the provider's inbox endpoint and a stable idempotency key.
 Provider acceptance does not confirm delivery to the recipient. Email and the
 database cannot share one transaction: if recording fails after provider acceptance,
-review the failure before retrying. The provider's idempotency window is finite.
+review the failure before retrying. The provider documents a
+[24-hour idempotency window](https://docs.openmail.sh/best-practices/idempotency).
 
 Scheduling and inbound email routing need separate configuration. Automated phone
 calls are not implemented and are disabled in the creation form.
