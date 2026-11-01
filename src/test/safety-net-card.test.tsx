@@ -23,6 +23,33 @@ const renderCard = (data = net, checkIns: Tables<"check_ins">[] = []) => render(
 beforeEach(() => { invoke.mockReset(); toast.mockReset(); });
 
 describe("follow-up card", () => {
+  it("shows a persistent manual-review alert for an unavailable saved assessment", () => {
+    renderCard({ ...net, status: "escalated" }, [{
+      id: "check", safety_net_id: net.id, sent_at: "2026-10-24T00:00:00Z", patient_response: "Synthetic response", red_flags_triggered: false, escalated: true,
+      assessment: { status: "unavailable", outcome: "uncertain", summary: "Automated assessment is unavailable. Review manually.", model: null, evidence: [] },
+    }]);
+    expect(screen.getByRole("alert")).toHaveTextContent("Assessment unavailable — manual review required");
+    expect(screen.queryByText(/Claude assessment/)).not.toBeInTheDocument();
+  });
+  it("makes an unavailable assessment visible instead of reporting an assessed response", async () => {
+    invoke.mockResolvedValue({ data: { status: "escalated", assessment: { status: "unavailable" } }, error: null });
+    renderCard();
+    fireEvent.click(screen.getByText("Demo Person"));
+    fireEvent.click(screen.getByRole("button", { name: /Simulate/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Submit Response" }));
+    await waitFor(() => expect(toast).toHaveBeenCalledWith(expect.objectContaining({ title: "Manual review required", variant: "destructive" })));
+  });
+  it("shows the model summary and provenance while retaining clinician review", () => {
+    renderCard({ ...net, status: "review_required" }, [{
+      id: "check", safety_net_id: net.id, sent_at: "2026-10-24T00:00:00Z", patient_response: "I feel better.", red_flags_triggered: false, escalated: false,
+      assessment: { status: "completed", outcome: "routine_review", summary: "Synthetic summary for clinician review.", model: "claude-test-model", prompt_version: "response-review-v1", assessed_at: "2026-10-24T00:00:00Z", evidence: [] },
+    }]);
+    expect(screen.getByText("Response recorded — awaiting clinician review")).toBeInTheDocument();
+    expect(screen.getByText("Claude assessment · Awaiting clinician review")).toBeInTheDocument();
+    fireEvent.click(screen.getByText("Demo Person"));
+    expect(screen.getByText(/Model: claude-test-model/)).toHaveTextContent("response-review-v1");
+    expect(screen.queryByText(/no keyword match/i)).not.toBeInTheDocument();
+  });
   it("requests delivery through the authenticated backend and surfaces failure", async () => {
     invoke.mockResolvedValue({ data: null, error: new Error("Not configured") });
     renderCard();
@@ -41,7 +68,7 @@ describe("follow-up card", () => {
     await waitFor(() => expect(invoke).toHaveBeenCalledWith("process-response", { body: { safety_net_id: net.id, response_text: "Breathing difficulty", simulation: true } }));
   });
   it("displays the latest response even if the query supplied unsorted check-ins", () => {
-    const checkIn = { safety_net_id: net.id, red_flags_triggered: true, escalated: true };
+    const checkIn = { assessment: null, safety_net_id: net.id, red_flags_triggered: true, escalated: true };
     renderCard({ ...net, status: "escalated" }, [
       { ...checkIn, id: "old", sent_at: "2026-10-23T00:00:00Z", patient_response: "Earlier demo response" },
       { ...checkIn, id: "new", sent_at: "2026-10-24T00:00:00Z", patient_response: "Latest demo response" },

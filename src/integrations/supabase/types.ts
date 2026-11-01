@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       check_ins: {
         Row: {
+          assessment: Json | null
           escalated: boolean
           id: string
           patient_response: string | null
@@ -24,6 +25,7 @@ export type Database = {
           sent_at: string
         }
         Insert: {
+          assessment?: Json | null
           escalated?: boolean
           id?: string
           patient_response?: string | null
@@ -32,6 +34,7 @@ export type Database = {
           sent_at?: string
         }
         Update: {
+          assessment?: Json | null
           escalated?: boolean
           id?: string
           patient_response?: string | null

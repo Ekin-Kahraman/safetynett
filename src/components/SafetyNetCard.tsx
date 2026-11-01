@@ -9,6 +9,7 @@ import { ChevronDown, ChevronUp, Mail, Phone, Play, Send } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
+import AssessmentSummary from "@/components/AssessmentSummary";
 
 type SafetyNet = Tables<"safety_nets">;
 type CheckIn = Tables<"check_ins">;
@@ -22,14 +23,16 @@ const statusBarColor: Record<string, string> = {
   escalated: "bg-destructive",
   sent: "bg-primary",
   pending: "bg-muted-foreground/40",
-  resolved: "bg-success",
+  review_required: "bg-primary",
+  resolved: "bg-primary",
 };
 
 const statusLabel: Record<string, string> = {
   escalated: "Escalated",
   sent: "Awaiting Response",
   pending: "Pending",
-  resolved: "No keyword match",
+  review_required: "Awaiting clinician review",
+  resolved: "Awaiting clinician review",
 };
 
 // Generate a realistic deterioration response based on condition
@@ -79,12 +82,16 @@ const SafetyNetCard = ({ safetyNet, checkIns }: SafetyNetCardProps) => {
 
   const simulateMutation = useMutation({
     mutationFn: async (responseText: string) => {
-      const { error } = await supabase.functions.invoke("process-response", {
+      const { data, error } = await supabase.functions.invoke("process-response", {
         body: { safety_net_id: safetyNet.id, response_text: responseText, simulation: true },
       });
       if (error) throw new Error("The demonstration response could not be saved. Please retry.");
+      return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      if (data?.assessment?.status === "unavailable") {
+        toast({ title: "Manual review required", description: "The response was saved, but automated assessment was unavailable. It remains flagged for review.", variant: "destructive" });
+      }
       setShowSimulate(false);
       setSimulatedResponse("");
       queryClient.invalidateQueries({ queryKey: ["safety_nets"] });
@@ -98,8 +105,9 @@ const SafetyNetCard = ({ safetyNet, checkIns }: SafetyNetCardProps) => {
   const barColor = statusBarColor[safetyNet.status] ?? "bg-muted-foreground/40";
 
   const timeText = (() => {
-    if (safetyNet.status === "resolved") {
-      return "Response recorded — no keyword match";
+    if (safetyNet.status === "escalated") return "Priority clinician review";
+    if (safetyNet.status === "review_required" || safetyNet.status === "resolved") {
+      return "Response recorded — awaiting clinician review";
     }
     const followUp = new Date(safetyNet.follow_up_at);
     if (followUp > new Date()) {
@@ -164,31 +172,27 @@ const SafetyNetCard = ({ safetyNet, checkIns }: SafetyNetCardProps) => {
             )}
           </div>
 
-          {/* Escalated: red flag badges + patient response */}
+          {/* Priority review is based on the assessment, not the list of selected concerns. */}
           {safetyNet.status === "escalated" && (
             <div className="mt-2 space-y-2">
-              <div className="flex flex-wrap gap-1">
-                {safetyNet.red_flags.map((flag) => (
-                  <Badge key={flag} variant="destructive" className="text-xs">
-                    {flag}
-                  </Badge>
-                ))}
-              </div>
+              <Badge variant="destructive" className="text-xs">Priority review</Badge>
               {patientResponse && (
                 <p className="text-sm text-foreground bg-destructive/10 rounded p-2 border border-destructive/20">
                   "{patientResponse}"
                 </p>
               )}
-              <p className="text-xs text-muted-foreground">Keyword match — review the response. Email delivery is not confirmed here.</p>
+              <p className="text-xs text-muted-foreground">Priority clinician review required. Email delivery is not confirmed here.</p>
             </div>
           )}
 
-          {/* Resolved: patient response in italic */}
-          {safetyNet.status === "resolved" && patientResponse && (
+          {/* Every recorded response remains open for clinician review. */}
+          {(safetyNet.status === "review_required" || safetyNet.status === "resolved") && patientResponse && (
             <p className="text-sm text-muted-foreground italic mt-2">
               "{patientResponse}"
             </p>
           )}
+
+          {latestCheckIn?.assessment && <AssessmentSummary value={latestCheckIn.assessment} />}
 
           {/* Expanded details */}
           {expanded && (
@@ -226,7 +230,7 @@ const SafetyNetCard = ({ safetyNet, checkIns }: SafetyNetCardProps) => {
 
               {safetyNet.red_flags.length > 0 && (
                 <div>
-                  <p className="text-sm text-muted-foreground mb-1">Red flags:</p>
+                  <p className="text-sm text-muted-foreground mb-1">Selected concerns:</p>
                   <div className="flex flex-wrap gap-1">
                     {safetyNet.red_flags.map((flag) => (
                       <Badge key={flag} variant="outline" className="text-xs">
@@ -258,6 +262,7 @@ const SafetyNetCard = ({ safetyNet, checkIns }: SafetyNetCardProps) => {
                       {ci.escalated && (
                         <Badge variant="destructive" className="mt-1 text-xs">Escalated</Badge>
                       )}
+                      {ci.assessment && <AssessmentSummary value={ci.assessment} detailed />}
                     </div>
                   ))}
                 </div>
@@ -294,6 +299,7 @@ const SafetyNetCard = ({ safetyNet, checkIns }: SafetyNetCardProps) => {
                   ) : (
                     <div className="space-y-2 border border-dashed border-primary/30 rounded-lg p-3 bg-primary/5">
                       <p className="text-xs font-medium text-primary">Simulate Patient Response</p>
+                      <p className="text-xs text-muted-foreground">Uses the configured Claude API. No notification email will be sent.</p>
                       <Textarea
                         value={simulatedResponse}
                         onChange={(e) => setSimulatedResponse(e.target.value)}

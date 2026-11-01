@@ -1,6 +1,7 @@
 -- SafetyNet Demo Data
 -- Run in Supabase SQL Editor after logging in with a demo GP account
 -- Replace USER_ID_HERE with the actual auth.users id of your demo GP account
+-- Synthetic seed replies have no model assessment and remain open for clinician review.
 
 -- ESCALATED: Child with meningitis signs
 INSERT INTO safety_nets (user_id, patient_name, patient_email, patient_dob, nhs_number, condition, timeframe_hours, red_flags, gp_name, notes, status, follow_up_method, created_at, follow_up_at) VALUES
@@ -23,11 +24,11 @@ INSERT INTO safety_nets (user_id, patient_name, patient_email, patient_dob, nhs_
  'Dr Emily Chen', 'Fell from bicycle, no LOC, GCS 15', 'sent', 'email',
  NOW() - INTERVAL '48 hours', NOW() - INTERVAL '1 hour');
 
--- RESOLVED: Community acquired pneumonia, patient better
+-- AWAITING REVIEW: Community acquired pneumonia, patient reports improvement
 INSERT INTO safety_nets (user_id, patient_name, patient_email, patient_dob, nhs_number, condition, timeframe_hours, red_flags, gp_name, notes, status, follow_up_method, created_at, follow_up_at) VALUES
 ('USER_ID_HERE', 'Fatima Al-Hassan', 'fatima.alhassan@demo.nhs', '1972-08-19', '834 221 6673', 'Community acquired pneumonia', 168,
  ARRAY['Oxygen sats < 94%', 'Confusion', 'Systolic BP < 90', 'Not improving after 48h antibiotics', 'Pleuritic chest pain worsening'],
- 'Dr Sarah Whitfield', 'Non-smoker, CRB-65 score 1', 'resolved', 'email',
+ 'Dr Sarah Whitfield', 'Non-smoker, CRB-65 score 1', 'review_required', 'email',
  NOW() - INTERVAL '10 days', NOW() - INTERVAL '3 days');
 
 -- PENDING: Cauda equina, not yet contacted
@@ -44,7 +45,7 @@ INSERT INTO safety_nets (user_id, patient_name, patient_email, patient_dob, nhs_
  'Dr Emily Chen', 'Age 6 months, mild recession, feeding 70% normal', 'pending', 'phone',
  NOW() - INTERVAL '3 hours', NOW() + INTERVAL '21 hours');
 
--- Check-in records for escalated and resolved
+-- Check-in records for priority and routine clinician review
 INSERT INTO check_ins (safety_net_id, patient_response, red_flags_triggered, escalated)
 SELECT id, 'She has a rash that doesn''t go away when I press a glass on it, and she''s very stiff in her neck. She seems confused and won''t look at the light.',
   TRUE, TRUE

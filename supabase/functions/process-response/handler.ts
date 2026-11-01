@@ -1,5 +1,5 @@
 import { authenticate, failure, HttpError, isId, json, preflight, readBody, sendMail, type Dependencies } from "../_shared/runtime.ts";
-import { matchRedFlags } from "../_shared/match-flags.ts";
+import { assessResponse, needsPriorityReview } from "../_shared/assess-response.ts";
 
 export function createResponseHandler(deps: Dependencies) {
   return async (req: Request): Promise<Response> => {
@@ -19,10 +19,12 @@ export function createResponseHandler(deps: Dependencies) {
       if (error) throw error;
       if (!net) throw new HttpError(404, "Follow-up not found");
       const response = body.response_text.trim();
-      const matched = matchRedFlags(response, net.red_flags as string[]);
-      const escalated = matched.length > 0;
+      const assessment = await assessResponse(deps, {
+        condition: String(net.condition), warning_signs: net.red_flags as string[], patient_response: response,
+      });
+      const escalated = needsPriorityReview(assessment);
       const { data: checkInId, error: recordError } = await client.rpc("record_safety_net_response", {
-        p_safety_net_id: net.id, p_response: response, p_escalated: escalated,
+        p_safety_net_id: net.id, p_response: response, p_assessment: assessment,
       });
       if (recordError) throw recordError;
       let notification = "not_required";
@@ -34,14 +36,14 @@ export function createResponseHandler(deps: Dependencies) {
             await sendMail(deps, {
               to: user.email,
               subject: `Review requested — ${net.patient_name} — ${net.condition}`,
-              body: `A demonstration response matched these configured phrases:\n${matched.join("\n")}\n\nResponse:\n${response}\n\nPlease review the response. A keyword match is not a clinical assessment.`,
+              body: `Clinician review is required.\n\nAssessment: ${assessment.status}\nOutcome: ${assessment.outcome}\nSummary: ${assessment.summary}\nModel: ${assessment.model ?? "not configured"}\nPrompt: ${assessment.prompt_version}\n\nSupporting quotes:\n${assessment.evidence.join("\n") || "No automated evidence available."}\n\nPatient response:\n${response}\n\nThis is a demonstration review request, not a diagnosis or assurance of clinical safety.`,
               idempotencyKey: `response-${checkInId}`,
             });
             notification = "accepted";
           } catch { /* The response is saved; expose failed notification separately. */ }
         }
       }
-      return json({ status: escalated ? "escalated" : "resolved", matched_flags: matched, notification });
+      return json({ status: escalated ? "escalated" : "review_required", assessment, notification });
     } catch (error) { return failure(error); }
   };
 }

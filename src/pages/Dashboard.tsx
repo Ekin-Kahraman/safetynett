@@ -12,7 +12,7 @@ import type { Tables } from "@/integrations/supabase/types";
 type SafetyNet = Tables<"safety_nets">;
 type CheckIn = Tables<"check_ins">;
 
-const TABS = ["All", "Escalated", "Awaiting Response", "Pending", "No keyword match"] as const;
+const TABS = ["All", "Escalated", "Awaiting Review", "Awaiting Response", "Pending"] as const;
 type Tab = (typeof TABS)[number];
 
 const tabToStatus: Record<Tab, string | null> = {
@@ -20,14 +20,15 @@ const tabToStatus: Record<Tab, string | null> = {
   Escalated: "escalated",
   "Awaiting Response": "sent",
   Pending: "pending",
-  "No keyword match": "resolved",
+  "Awaiting Review": "review_required",
 };
 
 const statusOrder: Record<string, number> = {
   escalated: 0,
-  sent: 1,
-  pending: 2,
-  resolved: 3,
+  review_required: 1,
+  resolved: 1,
+  sent: 2,
+  pending: 3,
 };
 
 const Dashboard = () => {
@@ -62,17 +63,17 @@ const Dashboard = () => {
     return acc;
   }, {});
 
-  const active = safetyNets.filter((s) => s.status !== "resolved");
   const counts = {
-    total: active.length,
+    total: safetyNets.length,
     pending: safetyNets.filter((s) => s.status === "pending").length,
     awaiting: safetyNets.filter((s) => s.status === "sent").length,
     escalated: safetyNets.filter((s) => s.status === "escalated").length,
+    review: safetyNets.filter((s) => s.status === "review_required" || s.status === "resolved").length,
   };
 
   const filteredStatus = tabToStatus[activeTab];
   const filtered = filteredStatus
-    ? safetyNets.filter((s) => s.status === filteredStatus)
+    ? safetyNets.filter((s) => s.status === filteredStatus || (filteredStatus === "review_required" && s.status === "resolved"))
     : safetyNets;
 
   const sorted = [...filtered].sort((a, b) => {
@@ -104,11 +105,12 @@ const Dashboard = () => {
       )}
 
       {/* Stat boxes */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
         <StatBox label="Total Active" count={counts.total} variant="default" />
         <StatBox label="Pending" count={counts.pending} variant="pending" />
         <StatBox label="Awaiting Response" count={counts.awaiting} variant="active" />
         <StatBox label="Escalated" count={counts.escalated} variant="escalated" />
+        <StatBox label="Awaiting Review" count={counts.review} variant="active" />
       </div>
 
       {/* Filter tabs */}
